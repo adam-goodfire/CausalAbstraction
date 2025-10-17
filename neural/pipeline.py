@@ -109,10 +109,18 @@ class LMPipeline(Pipeline):
         if isinstance(self.model_or_name, str):
             hf_token = self._init_extra_kwargs.get("hf_token", None) or os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_or_name, token=hf_token)
+
+            # Force eager attention implementation to avoid in-place operation issues with pyvene
+            # This is necessary for models using SDPA (Scaled Dot Product Attention)
+            attn_implementation = self._init_extra_kwargs.get("attn_implementation", "eager")
+
             self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_or_name, config=self._init_extra_kwargs.get("config"), token=hf_token
+                self.model_or_name,
+                config=self._init_extra_kwargs.get("config"),
+                token=hf_token,
+                attn_implementation=attn_implementation
             ).to(device=device, dtype=dtype)
-            if hasattr(self.model.config, "_attn_implementation"):
+            if hasattr(self.model.config, "_attn_implementation") and "qwen" in self.model.config._name_or_path.lower():
                 self.model.config._attn_implementation = "eager"
             if hasattr(self.model.config, "use_cache"):
                 self.model.config.use_cache = False

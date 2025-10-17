@@ -43,35 +43,32 @@ class FilterExperiment:
         self.checker = checker
 
     def filter(
-        self,
-        counterfactual_datasets: Dict[str, CounterfactualDataset],
-        batch_size: int = 32,
-        verbose: bool = False,
-        skip_counterfactual_datasets: List[str] = [] 
+        self, 
+        counterfactual_datasets: Dict[str, CounterfactualDataset], 
+        batch_size: int = 32, 
+        verbose: bool = False
     ) -> Dict[str, CounterfactualDataset]:
         """
         Filter datasets based on agreement between pipeline and causal model outputs.
-
+        
         For each example in each dataset, checks if both:
         1. The pipeline's prediction on the original input matches the causal model's output
         2. The pipeline's predictions on all counterfactual inputs match the causal model's outputs
-
+        
         Only examples where both conditions are met are kept in the filtered datasets.
-
+        
         Args:
             counterfactual_datasets: Dictionary mapping dataset names to CounterfactualDataset objects
             batch_size: Size of batches for processing
             verbose: Whether to print filtering statistics
-            skip_counterfactual_datasets: List of dataset names for which counterfactual validation
-                                         should be skipped (i.e., counterfactuals are automatically
-                                         considered valid, only original inputs are validated)
-
+            
         Returns:
             Dictionary mapping dataset names to filtered CounterfactualDataset objects
         """
         filtered_datasets = {}
         total_original = 0
         total_kept = 0
+        
         # Process each counterfactual dataset
         for dataset_name, counterfactual_dataset in counterfactual_datasets.items():
             dataset = counterfactual_dataset.dataset
@@ -91,11 +88,7 @@ class FilterExperiment:
 
                 # Process counterfactual inputs
                 all_cf_inputs = dataset["counterfactual_inputs"][b_i:b_i + batch_size]
-                # Skip counterfactual validation if this dataset is in the skip list
-                if dataset_name in skip_counterfactual_datasets:
-                    cf_valid = [True] * len(all_cf_inputs)
-                else:
-                    cf_valid = self._validate_counterfactual_inputs(dataset, all_cf_inputs, b_i, batch_size)
+                cf_valid = self._validate_counterfactual_inputs(dataset, all_cf_inputs, b_i, batch_size)
 
                 # Filter valid original and counterfactual input pairs
                 for idx, is_orig_valid in enumerate(orig_valid):
@@ -120,12 +113,11 @@ class FilterExperiment:
             )
             dataset_kept = len(filtered_data["input"])
             total_kept += dataset_kept
-
+            
             if verbose:
                 keep_rate = (dataset_kept / dataset_original) * 100
-                skip_msg = " (counterfactual validation skipped)" if dataset_name in skip_counterfactual_datasets else ""
                 print(f"Dataset '{dataset_name}': kept {dataset_kept}/{dataset_original} examples "
-                      f"({keep_rate:.1f}%){skip_msg}")
+                      f"({keep_rate:.1f}%)")
         
         # Report overall filtering results
         if verbose and total_original > 0:

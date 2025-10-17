@@ -147,13 +147,9 @@ def _prepare_intervenable_inputs(pipeline, batch, model_units_list):
     inv_locations = {"sources->base": (counterfactual_indices, base_indices)}
     logger.debug("base %s", base_indices)
     logger.debug("counterfactual %s", counterfactual_indices)
-
-    # Debug feature indices being passed
-    logger.debug("Number of model units: %d", sum(len(units) for units in model_units_list))
-    for i, model_units in enumerate(model_units_list):
-        for j, model_unit in enumerate(model_units):
-            logger.debug("model_unit %d-%d (%s) feature_indices: %s",
-                        i, j, model_unit.id, model_unit.get_feature_indices())
+    for model_units in model_units_list:
+        for model_unit in model_units:
+            logger.debug("model_unit indices_func id: %s", model_unit.component._indices_func.id)
     # visualize_intervention_tokens(pipeline, batched_base, batched_counterfactuals, inv_locations)
     return batched_base, batched_counterfactuals, inv_locations, feature_indices
 

@@ -497,11 +497,6 @@ class SAEFeaturizer(Featurizer):
 # --------------------------------------------------------------------------- #
 def _subspace_is_all_none(subspaces) -> bool:
     """Return ``True`` if *every* element of *subspaces* is ``None``."""
-    if subspaces is None:
-        return True
-    if not subspaces:  # Empty list
-        return False
-    return all(
-        inner is None or (inner and all(elem is None for elem in inner))
-        for inner in subspaces
+    return subspaces is None or all(
+        inner is None or all(elem is None for elem in inner) for inner in subspaces
     )

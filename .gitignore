@@ -2,5 +2,7 @@ __pycache__
 content/
 results/
 logs/
+.venv/
+demos/onboarding_tutorial/*results/
 
 run_baseline.sh
